@@ -111,6 +111,7 @@ let baseConfig = {
       'lodash.isempty': 'lodash-es/isEmpty',
       'lodash.forin': 'lodash-es/forIn',
       'lodash.clonedeep': 'lodash-es/cloneDeep',
+      ...ifProduction({}, { 'react-dom': '@hot-loader/react-dom' }),
     },
   },
 
