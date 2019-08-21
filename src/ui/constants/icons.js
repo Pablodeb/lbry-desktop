@@ -73,3 +73,4 @@ export const SUPPORT = 'TrendingUp';
 export const BLOCK = 'Slash';
 export const UNBLOCK = 'Circle';
 export const VIEW = 'View';
+export const SIGN_OUT = 'SignOut';
