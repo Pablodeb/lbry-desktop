@@ -85,6 +85,10 @@ fieldset-section:last-child {
 
 checkbox-element,
 radio-element {
+  &:hover {
+    cursor: pointer !important;
+  }
+
   label {
     color: lighten($lbry-black, 20%);
     margin-bottom: 0;
@@ -102,6 +106,9 @@ radio-element {
 }
 
 checkbox-toggle {
+  border-width: 1px;
+  border-radius: var(--input-border-radius);
+
   &:before {
     background-position: center;
     background-repeat: no-repeat;

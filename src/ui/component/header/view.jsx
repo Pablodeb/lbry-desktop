@@ -4,6 +4,7 @@ import * as SETTINGS from 'constants/settings';
 import * as PAGES from 'constants/pages';
 import React, { Fragment } from 'react';
 import { withRouter } from 'react-router';
+import classnames from 'classnames';
 import Button from 'component/button';
 import LbcSymbol from 'component/common/lbc-symbol';
 import WunderBar from 'component/wunderbar';
@@ -38,6 +39,7 @@ type Props = {
   setClientSetting: (string, boolean | string) => void,
   hideBalance: boolean,
   email: ?string,
+  minimal: boolean,
 };
 
 const Header = (props: Props) => {
@@ -49,8 +51,11 @@ const Header = (props: Props) => {
     automaticDarkModeEnabled,
     hideBalance,
     email,
+    minimal,
   } = props;
   const isAuthenticated = Boolean(email);
+  // Auth is optional in the desktop app
+  const showFullHeader = IS_WEB ? isAuthenticated : true;
 
   function handleThemeToggle() {
     if (automaticDarkModeEnabled) {
@@ -64,85 +69,122 @@ const Header = (props: Props) => {
     }
   }
 
-  function getAccountTitle() {
-    if (roundedBalance > 0 && !hideBalance) {
-      return (
-        <React.Fragment>
-          {roundedBalance} <LbcSymbol />
-        </React.Fragment>
-      );
-    }
-
-    return __('Account');
-  }
-
   function signOut() {
     // Replace this with actual clearUser function
     window.store.dispatch({ type: 'USER_FETCH_FAILURE' });
     deleteAuthToken();
   }
 
+  const accountMenuButtons = [
+    {
+      path: `/$/account`,
+      icon: ICONS.OVERVIEW,
+      label: __('Overview'),
+    },
+    {
+      path: `/$/rewards`,
+      icon: ICONS.FEATURED,
+      label: __('Rewards'),
+    },
+    {
+      path: `/$/wallet`,
+      icon: ICONS.WALLET,
+      label: __('Wallet'),
+    },
+    {
+      path: `/$/publish`,
+      icon: ICONS.PUBLISH,
+      label: __('Publish'),
+    },
+  ];
+
+  if (!isAuthenticated) {
+    accountMenuButtons.push({
+      onClick: signOut,
+      icon: ICONS.PUBLISH,
+      label: __('Publish'),
+    });
+  }
+
   return (
-    <header className="header">
+    <header className={classnames('header', { 'header--minimal': minimal })}>
       <div className="header__contents">
         <div className="header__navigation">
+          {/* @if TARGET='app' */}
+          {!minimal && (
+            <div className="header__navigation-arrows">
+              <Button
+                className="header__navigation-item header__navigation-item--back"
+                description={__('Navigate back')}
+                onClick={() => history.goBack()}
+                icon={ICONS.ARROW_LEFT}
+                iconSize={18}
+              />
+
+              <Button
+                className="header__navigation-item header__navigation-item--forward"
+                description={__('Navigate forward')}
+                onClick={() => history.goForward()}
+                icon={ICONS.ARROW_RIGHT}
+                iconSize={18}
+              />
+            </div>
+          )}
+          {/* @endif */}
+
           <Button
             className="header__navigation-item header__navigation-item--lbry"
             label={__('LBRY')}
             icon={ICONS.LBRY}
             navigate="/"
           />
-          {/* @if TARGET='app' */}
-          <div className="header__navigation-arrows">
-            <Button
-              className="header__navigation-item header__navigation-item--back"
-              description={__('Navigate back')}
-              onClick={() => history.goBack()}
-              icon={ICONS.ARROW_LEFT}
-              iconSize={18}
-            />
 
-            <Button
-              className="header__navigation-item header__navigation-item--forward"
-              description={__('Navigate forward')}
-              onClick={() => history.goForward()}
-              icon={ICONS.ARROW_RIGHT}
-              iconSize={18}
-            />
-          </div>
-          {/* @endif */}
-          <WunderBar />
+          {!minimal && <WunderBar />}
         </div>
 
         <div className="header__menu">
-          {isAuthenticated ? (
+          {showFullHeader ? (
             <Fragment>
               <Menu>
                 <MenuButton className="header__navigation-item menu__title">
-                  <Icon icon={ICONS.ACCOUNT} />
-                  {getAccountTitle()}
+                  {roundedBalance} <LbcSymbol />
                 </MenuButton>
                 <MenuList className="menu__list--header">
-                  <MenuItem className="menu__link" onSelect={() => history.push(`/$/account`)}>
-                    <Icon aria-hidden icon={ICONS.OVERVIEW} />
-                    {__('Overview')}
+                  <MenuItem className="menu__link" onSelect={() => history.push(`/$/wallet`)}>
+                    <Icon aria-hidden icon={ICONS.WALLET} />
+                    {__('Wallet')}
                   </MenuItem>
                   <MenuItem className="menu__link" onSelect={() => history.push(`/$/rewards`)}>
                     <Icon aria-hidden icon={ICONS.FEATURED} />
                     {__('Rewards')}
                   </MenuItem>
-                  <MenuItem className="menu__link" onSelect={() => history.push(`/$/wallet`)}>
-                    <Icon aria-hidden icon={ICONS.WALLET} />
-                    {__('Wallet')}
+                </MenuList>
+              </Menu>
+              <Menu>
+                <MenuButton className="header__navigation-item menu__title">
+                  <Icon size={18} icon={ICONS.ACCOUNT} />
+                </MenuButton>
+                <MenuList className="menu__list--header">
+                  <MenuItem
+                    className="menu__link"
+                    onSelect={() => history.push(isAuthenticated ? `/$/account` : `/$/auth/signup`)}
+                  >
+                    <Icon aria-hidden icon={ICONS.OVERVIEW} />
+                    {__('Overview')}
                   </MenuItem>
+
                   <MenuItem className="menu__link" onSelect={() => history.push(`/$/publish`)}>
                     <Icon aria-hidden icon={ICONS.PUBLISH} />
                     {__('Publish')}
                   </MenuItem>
-                  <MenuItem className="menu__link" onSelect={signOut}>
-                    <Icon aria-hidden icon={ICONS.SIGN_OUT} />
-                    {__('Sign Out')}
-                  </MenuItem>
+                  {isAuthenticated ? (
+                    <MenuItem className="menu__link" onSelect={signOut}>
+                      <Icon aria-hidden icon={ICONS.SIGN_OUT} />
+                      {__('Sign Out')}
+                    </MenuItem>
+                  ) : (
+                    <MenuItem onSelect={() => {}} />
+                  )}
                 </MenuList>
               </Menu>
 
@@ -168,8 +210,9 @@ const Header = (props: Props) => {
             </Fragment>
           ) : (
             <Fragment>
-              <Button navigate={`/$/${PAGES.AUTH}/signin`} button="link" label={__('Sign In')} />
-              <Button navigate={`/$/${PAGES.AUTH}/signup`} button="primary" label={__('Sign Up')} />
+              {/* <Button navigate={`/$/${PAGES.AUTH}/signin`} button="link" label={__('Sign In')} /> */}
+              <span />
+              <Button navigate={`/$/${PAGES.AUTH}/signin`} button="primary" label={__('Sign In')} />
             </Fragment>
           )}
         </div>

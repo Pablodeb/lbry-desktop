@@ -93,13 +93,7 @@ function App(props: Props) {
 
   return (
     <div className={MAIN_WRAPPER_CLASS} ref={appRef} onContextMenu={e => openContextMenu(e)}>
-      <Header />
-
-      <div className="main-wrapper__inner">
-        <Router />
-        <SideBar />
-      </div>
-
+      <Router />
       <ModalRouter />
       <FileViewer pageUri={uri} />
 
